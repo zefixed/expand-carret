@@ -1,0 +1,37 @@
+<idea-plugin>
+    <id>dev.zefixed.expandcursor</id>
+    <name>Expand Cursor</name>
+    <vendor>zefixed</vendor>
+    <description><![CDATA[
+    <p>VSCode-style "expand" caret blinking for JetBrains IDEs.</p>
+    <p>The caret smoothly collapses into a thin horizontal line at its vertical
+    center and expands back to full height (the same animation as
+    <code>editor.cursorBlinking: expand</code> in VSCode). The animation restarts
+    to full size whenever the caret moves and stays solid while you are typing.</p>
+    <p>Configure it under <b>Settings | Editor | Expand Cursor</b>, or run the
+    <b>Toggle Expand Cursor</b> action (assign a shortcut via Find Action).</p>
+    <p>The blink rate follows the IDE "Blinking period" setting. If caret blinking
+    is disabled in the IDE, the plugin stays idle.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="dev.zefixed.expandcursor.ExpandCursorManager"/>
+        <applicationService serviceImplementation="dev.zefixed.expandcursor.settings.ExpandCursorSettings"/>
+        <applicationConfigurable parentId="editor"
+                                 id="dev.zefixed.expandcursor.ExpandCursorConfigurable"
+                                 displayName="Expand Cursor"
+                                 instance="dev.zefixed.expandcursor.settings.ExpandCursorConfigurable"/>
+        <postStartupActivity implementation="dev.zefixed.expandcursor.ExpandCursorStartupActivity"/>
+    </extensions>
+
+    <actions>
+        <action id="dev.zefixed.expandcursor.ToggleExpandCursor"
+                class="dev.zefixed.expandcursor.ToggleExpandCursorAction"
+                text="Toggle Expand Cursor"
+                description="Toggles the VSCode-style expand caret animation.">
+            <add-to-group group-id="EditMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
