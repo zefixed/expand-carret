@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.ui.EditorTextField
 import dev.zefixed.expandcursor.settings.ExpandCursorSettings
 import dev.zefixed.expandcursor.settings.ExpandCursorSettingsListener
 import javax.swing.Timer
@@ -69,8 +71,13 @@ class ExpandCursorManager : Disposable {
         }
     }
 
-    private fun shouldAttach(editor: Editor): Boolean =
-        settings.state.enabled && !editor.isOneLineMode && editor.settings.isBlinkCaret
+    private fun shouldAttach(editor: Editor): Boolean {
+        if (!settings.state.enabled) return false
+        if (editor.isOneLineMode) return false
+        if (editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) == true) return false
+        if ((editor as? EditorEx)?.isRendererMode == true) return false
+        return editor.settings.isBlinkCaret
+    }
 
     internal fun isAttached(editor: Editor): Boolean = editor in sessions
 

@@ -12,6 +12,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.awt.Color
+import java.awt.image.BufferedImage
 import kotlin.math.abs
 
 class EditorSessionTest : LightPlatform4TestCase() {
@@ -81,6 +82,37 @@ class EditorSessionTest : LightPlatform4TestCase() {
             val advance = CaretGeometry.charAdvanceOf(editor, 0, 0, 0, 0)
             val spaceAdvance = CaretGeometry.spaceAdvanceOf(editor)
             assertEquals(advance.toLong(), spaceAdvance.toLong())
+        } finally {
+            EditorFactory.getInstance().releaseEditor(editor)
+        }
+    }
+
+    @Test
+    fun `paint draws nothing when editor is not focused`() {
+        val (_, editor) = newEditor()
+        try {
+            val session = EditorSession(editor, ExpandCursorSettings.instance)
+            session.attach()
+            try {
+                val image = BufferedImage(200, 60, BufferedImage.TYPE_INT_ARGB)
+                val g = image.createGraphics()
+                try {
+                    session.paint(g)
+                } finally {
+                    g.dispose()
+                }
+                for (x in 0 until image.width) {
+                    for (y in 0 until image.height) {
+                        assertEquals(
+                            "overlay must not paint without focus",
+                            0,
+                            image.getRGB(x, y) ushr 24,
+                        )
+                    }
+                }
+            } finally {
+                session.detach()
+            }
         } finally {
             EditorFactory.getInstance().releaseEditor(editor)
         }

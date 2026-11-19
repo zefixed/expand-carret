@@ -2,6 +2,8 @@ package dev.zefixed.expandcursor
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.ui.EditorTextField
 import dev.zefixed.expandcursor.settings.ExpandCursorSettings
 import dev.zefixed.expandcursor.settings.ExpandCursorSettingsListener
 import org.junit.Assert.assertEquals
@@ -49,6 +51,57 @@ class ExpandCursorManagerServiceTest : com.intellij.testFramework.LightPlatform4
                 settings.state.enabled = true
                 manager.reconcile()
                 assertTrue("session must reattach on re-enable with no editor events", manager.isAttached(editor))
+            } finally {
+                settings.state.enabled = previous
+                manager.reconcile()
+            }
+        } finally {
+            EditorFactory.getInstance().releaseEditor(editor)
+        }
+    }
+
+    @Test
+    fun `renderer mode supplementary editors are excluded from attachment`() {
+        val document = EditorFactory.getInstance().createDocument("cell")
+        val editor = EditorFactory.getInstance().createEditor(document, project) as EditorEx
+        editor.setViewer(true)
+        editor.setRendererMode(true)
+        editor.putUserData(EditorTextField.SUPPLEMENTARY_KEY, true)
+        try {
+            val manager = ApplicationManager.getApplication().getService(ExpandCursorManager::class.java)
+            val settings = ExpandCursorSettings.instance
+            val previous = settings.state.enabled
+            try {
+                settings.state.enabled = true
+                manager.reconcile()
+                assertFalse(
+                    "renderer-mode supplementary editor must not be attached",
+                    manager.isAttached(editor),
+                )
+            } finally {
+                settings.state.enabled = previous
+                manager.reconcile()
+            }
+        } finally {
+            EditorFactory.getInstance().releaseEditor(editor)
+        }
+    }
+
+    @Test
+    fun `plain viewer editor without renderer markers is still attached`() {
+        val document = EditorFactory.getInstance().createDocument("diff")
+        val editor = (EditorFactory.getInstance().createEditor(document, project) as EditorEx).apply { setViewer(true) }
+        try {
+            val manager = ApplicationManager.getApplication().getService(ExpandCursorManager::class.java)
+            val settings = ExpandCursorSettings.instance
+            val previous = settings.state.enabled
+            try {
+                settings.state.enabled = true
+                manager.reconcile()
+                assertTrue(
+                    "plain viewer editor must stay attached when enabled",
+                    manager.isAttached(editor),
+                )
             } finally {
                 settings.state.enabled = previous
                 manager.reconcile()

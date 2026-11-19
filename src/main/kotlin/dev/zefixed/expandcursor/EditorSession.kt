@@ -134,6 +134,8 @@ internal class EditorSession(
     fun elapsedMillis(): Long = (System.nanoTime() - phaseStartNanos.get()) / 1_000_000L
 
     fun paint(g: java.awt.Graphics2D) {
+        val component = editor.contentComponent
+        if (!component.isShowing || !component.hasFocus()) return
         val cycle = ExpandCursorTiming.cycleMillis(halfPeriodMillis())
         val scale = ExpandCursorTiming.scaleAt(elapsedMillis(), cycle).toDouble()
         if (scale <= 0.0) return
